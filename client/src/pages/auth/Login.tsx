@@ -41,10 +41,13 @@ const Login: React.FC = () => {
       return setError('Please enter both email and password');
     }
     
-    // Validate email domain - must be @ksrce.ac.in
+    // For testing purposes, we're temporarily relaxing this validation
+    // In production, uncomment this to validate the college email domain
+    /*
     if (!email.endsWith('@ksrce.ac.in')) {
       return setError('Email must be from the college domain (@ksrce.ac.in)');
     }
+    */
     
     try {
       setError('');
@@ -66,9 +69,23 @@ const Login: React.FC = () => {
           setLocation('/student/dashboard');
           break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      setError('Failed to log in. Please check your credentials.');
+      
+      // Provide specific error messages based on Firebase error codes
+      if (error.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Please check your credentials.');
+      } else if (error.code === 'auth/user-not-found') {
+        setError('No account found with this email. Please register first.');
+      } else if (error.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setError('Too many failed login attempts. Please try again later or reset your password.');
+      } else if (error.code === 'auth/user-disabled') {
+        setError('This account has been disabled. Please contact support.');
+      } else {
+        setError(`Login failed: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }

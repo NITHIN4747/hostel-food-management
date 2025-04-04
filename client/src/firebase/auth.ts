@@ -20,24 +20,29 @@ export const registerWithEmail = async (
   email: string, 
   password: string, 
   displayName: string, 
-  role: string = "student", 
+  role: 'student' | 'admin' | 'kitchen' = 'student', 
   hostelRoom?: string
 ) => {
-  // Create the user in Firebase Authentication
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-  
-  // Create a user document in Firestore
-  await setDoc(doc(db, "users", user.uid), {
-    uid: user.uid,
-    displayName,
-    email,
-    role,
-    hostelRoom: hostelRoom || '',
-    createdAt: new Date()
-  });
-  
-  return userCredential;
+  try {
+    // Create the user in Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Create a user document in Firestore
+    await setDoc(doc(db, "users", user.uid), {
+      uid: user.uid,
+      displayName,
+      email,
+      role,
+      hostelRoom: hostelRoom || '',
+      createdAt: new Date().toISOString() // Use ISO string for date to avoid serialization issues
+    });
+    
+    return userCredential;
+  } catch (error) {
+    console.error("Registration error:", error);
+    throw error;
+  }
 };
 
 // Sign in with Google

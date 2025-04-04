@@ -49,10 +49,13 @@ const Register: React.FC = () => {
       return setError('Passwords do not match');
     }
     
-    // Validate email domain - must be @ksrce.ac.in
+    // For testing purposes, we're temporarily relaxing this validation
+    // In production, uncomment this to validate the college email domain
+    /*
     if (!email.endsWith('@ksrce.ac.in')) {
       return setError('Email must be from the college domain (@ksrce.ac.in)');
     }
+    */
     
     try {
       setError('');
@@ -72,9 +75,23 @@ const Register: React.FC = () => {
         setLocation('/login');
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      setError('Failed to create an account. Please try again.');
+      
+      // Provide specific error messages based on Firebase error codes
+      if (error.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Please use a different email or try logging in.');
+      } else if (error.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use at least 6 characters.');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Invalid email format. Please check your email address.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setError('Email/password registration is not enabled. Please contact system administrator.');
+      } else if (error.code === 'invalid-argument') {
+        setError('Invalid information provided. Please check all fields and try again.');
+      } else {
+        setError(`Failed to create an account: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
