@@ -1,6 +1,6 @@
 🍽️ Hostel Food Management System
 
-A smart, efficient web application built to simplify hostel meal management, monitor food inventory, and track attendance. Developed with love by TrioLogic during a 24-hour hackathon.
+A smart, efficient web application built to simplify hostel meal management, monitor food inventory, and track attendance. Developed with love by TrioLogic during a hackathon.
 
 🚀 Project Overview
 The Hostel Food Management System streamlines daily hostel food operations. It provides a centralized dashboard for admins, supervisors, and students to manage meals, track inventory, and ensure nothing goes to waste.
