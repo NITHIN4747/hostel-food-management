@@ -13,7 +13,7 @@ interface UserData {
   uid: string;
   email: string;
   displayName: string;
-  role: 'student' | 'admin';
+  role: 'student' | 'admin' | 'kitchen';
   hostelRoom?: string;
 }
 
