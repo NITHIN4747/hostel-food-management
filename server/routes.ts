@@ -7,7 +7,9 @@ import {
   insertMealPreferenceSchema,
   insertMealAttendanceSchema,
   insertNotificationSchema,
-  insertLeaveRequestSchema
+  insertLeaveRequestSchema,
+  insertMealFeedbackSchema,
+  insertFinancialSummarySchema
 } from "../shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -316,6 +318,193 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       res.json(report);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // Additional meal attendance endpoints
+  app.patch("/api/meal-attendance/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const attendanceData = req.body;
+      
+      const updatedAttendance = await storage.updateMealAttendance(id, attendanceData);
+      
+      if (!updatedAttendance) {
+        return res.status(404).json({ error: "Meal attendance record not found" });
+      }
+      
+      res.json(updatedAttendance);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.post("/api/meal-attendance/sync-hostel", async (req, res) => {
+    try {
+      const { userId, date } = req.body;
+      
+      if (!userId || !date) {
+        return res.status(400).json({ error: "User ID and date are required" });
+      }
+      
+      const updatedAttendances = await storage.syncMealAttendanceWithHostel(
+        parseInt(userId),
+        date
+      );
+      
+      res.json(updatedAttendances);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/attendance/stats/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const stats = await storage.getMealAttendanceStats(userId);
+      res.json(stats);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/attendance/history/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const history = await storage.getAttendanceHistory(userId);
+      res.json(history);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // Meal Feedback endpoints
+  app.post("/api/meal-feedback", async (req, res) => {
+    try {
+      const feedbackData = insertMealFeedbackSchema.parse(req.body);
+      const feedback = await storage.createMealFeedback({
+        ...feedbackData,
+        timestamp: new Date()
+      });
+      res.status(201).json(feedback);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/meal-feedback", async (req, res) => {
+    try {
+      const { mealId, userId } = req.query;
+      
+      const feedback = await storage.getMealFeedback(
+        mealId ? parseInt(mealId as string) : undefined,
+        userId ? parseInt(userId as string) : undefined
+      );
+      
+      res.json(feedback);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // Financial Summary endpoints
+  app.get("/api/financial-summary/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { academicYear } = req.query;
+      
+      const summary = await storage.getStudentFinancialSummary(
+        userId,
+        academicYear as string | undefined
+      );
+      
+      if (!summary) {
+        return res.status(404).json({ error: "Financial summary not found" });
+      }
+      
+      res.json(summary);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.post("/api/financial-summary", async (req, res) => {
+    try {
+      const summaryData = insertFinancialSummarySchema.parse(req.body);
+      const summary = await storage.createOrUpdateFinancialSummary({
+        ...summaryData,
+        lastUpdated: new Date()
+      });
+      res.status(201).json(summary);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // Additional meal endpoints
+  app.get("/api/meals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const meal = await storage.getMealById(id);
+      
+      if (!meal) {
+        return res.status(404).json({ error: "Meal not found" });
+      }
+      
+      res.json(meal);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/meals/by-date/:date", async (req, res) => {
+    try {
+      const date = req.params.date;
+      const { type } = req.query;
+      
+      const meals = await storage.getMealsByDate(
+        date,
+        type as string | undefined
+      );
+      
+      res.json(meals);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.patch("/api/meals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const mealData = req.body;
+      
+      const updatedMeal = await storage.updateMeal(id, mealData);
+      
+      if (!updatedMeal) {
+        return res.status(404).json({ error: "Meal not found" });
+      }
+      
+      res.json(updatedMeal);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // User update endpoint
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userData = req.body;
+      
+      const updatedUser = await storage.updateUser(id, userData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(updatedUser);
     } catch (error) {
       handleError(res, error);
     }

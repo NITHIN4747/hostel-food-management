@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,7 +9,9 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   role: text("role").notNull().default("student"),
   roomNumber: text("room_number"),
-  hostelId: text("hostel_id")
+  hostelId: text("hostel_id"),
+  academicYear: text("academic_year"),
+  totalMealFees: integer("total_meal_fees").default(0) // Total meal fees for academic year
 });
 
 export const meals = pgTable("meals", {
@@ -17,6 +19,13 @@ export const meals = pgTable("meals", {
   date: text("date").notNull(), // YYYY-MM-DD format
   type: text("type").notNull(), // breakfast, lunch, dinner
   price: integer("price").notNull().default(75), // Default price is Rs.75
+  items: json("items").$type<string[]>().default([]), // Meal items for the day
+  nutritionalInfo: json("nutritional_info").$type<{
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }>().default({ calories: 0, protein: 0, carbs: 0, fat: 0 })
 });
 
 export const mealPreferences = pgTable("meal_preferences", {
@@ -26,7 +35,8 @@ export const mealPreferences = pgTable("meal_preferences", {
   breakfast: boolean("breakfast").notNull().default(true),
   lunch: boolean("lunch").notNull().default(true),
   dinner: boolean("dinner").notNull().default(true),
-  fullDayLeave: boolean("full_day_leave").notNull().default(false)
+  fullDayLeave: boolean("full_day_leave").notNull().default(false),
+  dietaryRestrictions: json("dietary_restrictions").$type<string[]>().default([])
 });
 
 export const mealAttendance = pgTable("meal_attendance", {
@@ -36,6 +46,7 @@ export const mealAttendance = pgTable("meal_attendance", {
   mealType: text("meal_type").notNull(), // breakfast, lunch, dinner
   attended: boolean("attended").notNull().default(false),
   timestamp: timestamp("timestamp").notNull(),
+  hostelAttendanceSync: boolean("hostel_attendance_sync").default(false) // Flag if synced with hostel attendance
 });
 
 export const notifications = pgTable("notifications", {
@@ -46,7 +57,7 @@ export const notifications = pgTable("notifications", {
   timestamp: timestamp("timestamp").notNull(),
 });
 
-// New table for leave requests (for skipping meals that were marked as willing)
+// Table for leave requests (for skipping meals that were marked as willing)
 export const leaveRequests = pgTable("leave_requests", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -57,19 +68,45 @@ export const leaveRequests = pgTable("leave_requests", {
   timestamp: timestamp("timestamp").notNull(),
 });
 
+// Table for meal feedback and ratings
+export const mealFeedback = pgTable("meal_feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  mealId: integer("meal_id").notNull(),
+  rating: integer("rating").notNull(), // 1-5 rating
+  feedback: text("feedback"),
+  timestamp: timestamp("timestamp").notNull()
+});
+
+// Table for academic year financial summary
+export const financialSummary = pgTable("financial_summary", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  academicYear: text("academic_year").notNull(), // e.g., "2023-2024"
+  totalMealFees: integer("total_meal_fees").notNull(), // Total meal fees for the year
+  totalSavings: integer("total_savings").notNull().default(0), // Total amount saved
+  mealsAttended: integer("meals_attended").notNull().default(0), // Total meals attended
+  mealsSkipped: integer("meals_skipped").notNull().default(0), // Total meals skipped
+  lastUpdated: timestamp("last_updated").notNull()
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   displayName: true,
   role: true,
   roomNumber: true,
-  hostelId: true
+  hostelId: true,
+  academicYear: true,
+  totalMealFees: true
 });
 
 export const insertMealSchema = createInsertSchema(meals).pick({
   date: true,
   type: true,
-  price: true
+  price: true,
+  items: true,
+  nutritionalInfo: true
 });
 
 export const insertMealPreferenceSchema = createInsertSchema(mealPreferences).pick({
@@ -78,7 +115,8 @@ export const insertMealPreferenceSchema = createInsertSchema(mealPreferences).pi
   breakfast: true,
   lunch: true,
   dinner: true,
-  fullDayLeave: true
+  fullDayLeave: true,
+  dietaryRestrictions: true
 });
 
 export const insertMealAttendanceSchema = createInsertSchema(mealAttendance).pick({
@@ -86,7 +124,8 @@ export const insertMealAttendanceSchema = createInsertSchema(mealAttendance).pic
   date: true,
   mealType: true,
   attended: true,
-  timestamp: true
+  timestamp: true,
+  hostelAttendanceSync: true
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
@@ -103,6 +142,24 @@ export const insertLeaveRequestSchema = createInsertSchema(leaveRequests).pick({
   reason: true,
   status: true,
   timestamp: true
+});
+
+export const insertMealFeedbackSchema = createInsertSchema(mealFeedback).pick({
+  userId: true,
+  mealId: true,
+  rating: true,
+  feedback: true,
+  timestamp: true
+});
+
+export const insertFinancialSummarySchema = createInsertSchema(financialSummary).pick({
+  userId: true,
+  academicYear: true,
+  totalMealFees: true,
+  totalSavings: true,
+  mealsAttended: true,
+  mealsSkipped: true,
+  lastUpdated: true
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -122,3 +179,9 @@ export type Notification = typeof notifications.$inferSelect;
 
 export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
 export type LeaveRequest = typeof leaveRequests.$inferSelect;
+
+export type InsertMealFeedback = z.infer<typeof insertMealFeedbackSchema>;
+export type MealFeedback = typeof mealFeedback.$inferSelect;
+
+export type InsertFinancialSummary = z.infer<typeof insertFinancialSummarySchema>;
+export type FinancialSummary = typeof financialSummary.$inferSelect;
