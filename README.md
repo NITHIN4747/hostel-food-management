@@ -60,7 +60,7 @@ Authentication: Firebase Auth
 
 1️⃣ Clone the Repository
 
-git clone https://github.com/your-username/hostel-food-management.git
+git clone https://github.com/NITHIN4747/hostel-food-management.git
 cd hostel-food-management
 
 2️⃣ Install Dependencies
