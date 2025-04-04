@@ -201,11 +201,31 @@ export class MemStorage implements IStorage {
     // Set default values if not provided
     const nutritionalInfo = insertMeal.nutritionalInfo || { calories: 0, protein: 0, carbs: 0, fat: 0 };
     const items = insertMeal.items || [];
+    
+    // Set default meal timing information if not provided
+    const type = insertMeal.type || 'breakfast';
+    let defaultStartTime = '07:00';
+    let defaultEndTime = '08:30';
+    let defaultDeadline = '03:00'; // 3 AM same day for breakfast
+    
+    if (type === 'lunch') {
+      defaultStartTime = '12:00';
+      defaultEndTime = '13:30';
+      defaultDeadline = '08:00'; // 8 AM same day for lunch
+    } else if (type === 'dinner') {
+      defaultStartTime = '19:00';
+      defaultEndTime = '20:30';
+      defaultDeadline = '15:00'; // 3 PM same day for dinner
+    }
+    
     const meal = { 
       ...insertMeal, 
       id,
       items,
-      nutritionalInfo
+      nutritionalInfo,
+      startTime: insertMeal.startTime || defaultStartTime,
+      endTime: insertMeal.endTime || defaultEndTime,
+      willingnessDeadline: insertMeal.willingnessDeadline || defaultDeadline
     };
     this.meals.set(id, meal);
     return meal;
@@ -242,7 +262,26 @@ export class MemStorage implements IStorage {
   
   async createMealPreference(insertPreference: InsertMealPreference): Promise<MealPreference> {
     const id = this.preferenceIdCounter++;
-    const preference = { ...insertPreference, id };
+    const now = new Date();
+    const submittedAt = insertPreference.submittedAt || now;
+    const updatedAt = insertPreference.updatedAt || now;
+    const breakfast = insertPreference.breakfast !== undefined ? insertPreference.breakfast : true;
+    const lunch = insertPreference.lunch !== undefined ? insertPreference.lunch : true;
+    const dinner = insertPreference.dinner !== undefined ? insertPreference.dinner : true;
+    const fullDayLeave = insertPreference.fullDayLeave !== undefined ? insertPreference.fullDayLeave : false;
+    const dietaryRestrictions = insertPreference.dietaryRestrictions || [];
+    
+    const preference = { 
+      ...insertPreference, 
+      id,
+      breakfast,
+      lunch,
+      dinner,
+      fullDayLeave,
+      dietaryRestrictions,
+      submittedAt,
+      updatedAt
+    };
     this.mealPreferences.set(id, preference);
     return preference;
   }
@@ -275,10 +314,16 @@ export class MemStorage implements IStorage {
   async createMealAttendance(insertAttendance: InsertMealAttendance): Promise<MealAttendance> {
     const id = this.attendanceIdCounter++;
     const hostelAttendanceSync = insertAttendance.hostelAttendanceSync || false;
+    const wasWilling = insertAttendance.wasWilling !== undefined ? insertAttendance.wasWilling : true;
+    const physicallyVerified = insertAttendance.physicallyVerified || false;
     const attendance = { 
       ...insertAttendance, 
       id,
-      hostelAttendanceSync
+      hostelAttendanceSync,
+      wasWilling,
+      physicallyVerified,
+      verifiedBy: insertAttendance.verifiedBy,
+      verificationTimestamp: insertAttendance.verificationTimestamp
     };
     this.mealAttendance.set(id, attendance);
     return attendance;
@@ -302,33 +347,56 @@ export class MemStorage implements IStorage {
     const attendances = await this.getMealAttendance(userId, date);
     const updatedAttendances: MealAttendance[] = [];
     
+    // Get first admin user to use as verifier
+    const admin = Array.from(this.users.values()).find(user => user.role === 'admin');
+    const verifierId = admin ? admin.id : null;
+    
     for (const attendance of attendances) {
-      const updated = await this.updateMealAttendance(attendance.id, {
-        hostelAttendanceSync: true,
-        // Using a simple approach for demo: if student was in hostel, they attended the meal
-        attended: true 
-      });
-      
-      if (updated) {
-        updatedAttendances.push(updated);
+      // Only mark attendance if the student marked willingness in advance
+      if (attendance.wasWilling) {
+        const updated = await this.updateMealAttendance(attendance.id, {
+          hostelAttendanceSync: true,
+          // Using a simple approach for demo: if student was in hostel, they attended the meal
+          attended: true,
+          physicallyVerified: true,
+          verifiedBy: verifierId,
+          verificationTimestamp: new Date()
+        });
+        
+        if (updated) {
+          updatedAttendances.push(updated);
+        }
       }
     }
     
     return updatedAttendances;
   }
   
-  async getMealAttendanceStats(userId: number): Promise<{totalAttended: number, totalSavings: number}> {
+  async getMealAttendanceStats(userId: number): Promise<{
+    totalAttended: number, 
+    totalSkipped: number,
+    totalSavings: number,
+    physicallyVerified: number,
+    notWilling: number
+  }> {
     const attendances = Array.from(this.mealAttendance.values()).filter(
       att => att.userId === userId
     );
     
     const totalAttended = attendances.filter(att => att.attended).length;
     const totalSkipped = attendances.filter(att => !att.attended).length;
-    const totalSavings = totalSkipped * 75; // Rs.75 per meal saved
+    const physicallyVerified = attendances.filter(att => att.physicallyVerified).length;
+    const notWilling = attendances.filter(att => !att.wasWilling).length;
+    
+    // Savings calculated from meals skipped due to student marking unwillingness
+    const totalSavings = notWilling * 75; // Rs.75 per meal saved when not willing
     
     return {
       totalAttended,
-      totalSavings
+      totalSkipped,
+      totalSavings,
+      physicallyVerified,
+      notWilling
     };
   }
   
@@ -498,6 +566,14 @@ export class MemStorage implements IStorage {
       }
     );
     
+    // Get all meal attendance records for this user in the date range
+    const allAttendances = Array.from(this.mealAttendance.values()).filter(
+      (att) => {
+        if (att.userId !== userId) return false;
+        return att.date >= startDate && att.date <= endDate;
+      }
+    );
+    
     // Calculate total charges and refunds
     let totalCharges = 0;
     let totalRefunds = 0;
@@ -506,7 +582,7 @@ export class MemStorage implements IStorage {
       // Base charge is Rs.225 per day (Rs.75 × 3 meals)
       totalCharges += 225;
       
-      // Calculate refunds
+      // Calculate refunds based on preferences
       if (pref.fullDayLeave) {
         totalRefunds += 225; // Full day refund
       } else {
@@ -516,12 +592,36 @@ export class MemStorage implements IStorage {
       }
     }
     
+    // Additional refunds for when student marked willingness but was not physically present
+    // These require an approved leave request to be eligible for refund
+    const approvedLeaveRequests = Array.from(this.leaveRequests.values()).filter(
+      req => req.userId === userId && req.status === 'approved' && 
+             req.date >= startDate && req.date <= endDate
+    );
+    
+    let totalApprovedLeaveRefunds = 0;
+    for (const leave of approvedLeaveRequests) {
+      // Find corresponding attendance record
+      const attendance = allAttendances.find(
+        att => att.date === leave.date && att.mealType === leave.mealType
+      );
+      
+      // If student marked willingness but got approved leave and didn't attend
+      if (attendance && attendance.wasWilling && !attendance.attended) {
+        totalApprovedLeaveRefunds += 75;
+      }
+    }
+    
+    // Add approved leave refunds to total refunds
+    totalRefunds += totalApprovedLeaveRefunds;
+    
     return {
       userId,
       startDate,
       endDate,
       totalCharges,
       totalRefunds,
+      approvedLeaveRefunds: totalApprovedLeaveRefunds,
       netAmount: totalCharges - totalRefunds
     };
   }
@@ -532,45 +632,81 @@ export class MemStorage implements IStorage {
       (pref) => pref.date >= startDate && pref.date <= endDate
     );
     
+    // Get all meal attendance records in the date range
+    const allAttendances = Array.from(this.mealAttendance.values()).filter(
+      (att) => att.date >= startDate && att.date <= endDate
+    );
+    
     // Get all users
     const userCount = this.users.size;
     
-    // Count meals that would have been wasted
-    let breakfastSaved = 0;
-    let lunchSaved = 0;
-    let dinnerSaved = 0;
-    let totalMealsSaved = 0;
+    // Count meals saved due to advance notification (meal preferences)
+    let breakfastPreferenceSaved = 0;
+    let lunchPreferenceSaved = 0;
+    let dinnerPreferenceSaved = 0;
+    let totalPreferenceSaved = 0;
     
     for (const pref of allPreferences) {
       if (pref.fullDayLeave) {
-        breakfastSaved++;
-        lunchSaved++;
-        dinnerSaved++;
-        totalMealsSaved += 3;
+        breakfastPreferenceSaved++;
+        lunchPreferenceSaved++;
+        dinnerPreferenceSaved++;
+        totalPreferenceSaved += 3;
       } else {
         if (!pref.breakfast) {
-          breakfastSaved++;
-          totalMealsSaved++;
+          breakfastPreferenceSaved++;
+          totalPreferenceSaved++;
         }
         if (!pref.lunch) {
-          lunchSaved++;
-          totalMealsSaved++;
+          lunchPreferenceSaved++;
+          totalPreferenceSaved++;
         }
         if (!pref.dinner) {
-          dinnerSaved++;
-          totalMealsSaved++;
+          dinnerPreferenceSaved++;
+          totalPreferenceSaved++;
         }
+      }
+    }
+    
+    // Count actual verification-based savings
+    let breakfastVerificationSaved = 0;
+    let lunchVerificationSaved = 0;
+    let dinnerVerificationSaved = 0;
+    let totalVerificationSaved = 0;
+    
+    // Count meals that were marked as willing but not physically attended
+    for (const att of allAttendances) {
+      if (att.wasWilling && !att.physicallyVerified) {
+        if (att.mealType === 'breakfast') {
+          breakfastVerificationSaved++;
+        } else if (att.mealType === 'lunch') {
+          lunchVerificationSaved++;
+        } else if (att.mealType === 'dinner') {
+          dinnerVerificationSaved++;
+        }
+        totalVerificationSaved++;
       }
     }
     
     return {
       startDate,
       endDate,
-      breakfastSaved,
-      lunchSaved,
-      dinnerSaved,
-      totalMealsSaved,
-      estimatedCostSaved: totalMealsSaved * 75 // Rs.75 per meal
+      // Meals saved from advance notification
+      breakfastPreferenceSaved,
+      lunchPreferenceSaved,
+      dinnerPreferenceSaved,
+      totalPreferenceSaved,
+      estimatedPreferenceSavings: totalPreferenceSaved * 75, // Rs.75 per meal
+      
+      // Meals verified physically (measures attendance verification system efficiency)
+      breakfastVerificationSaved,
+      lunchVerificationSaved,
+      dinnerVerificationSaved,
+      totalVerificationSaved,
+      
+      // Total savings from both systems
+      totalMealsSaved: totalPreferenceSaved + totalVerificationSaved,
+      estimatedTotalSavings: (totalPreferenceSaved + totalVerificationSaved) * 75 // Rs.75 per meal
     };
   }
 }

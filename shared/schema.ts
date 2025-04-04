@@ -20,6 +20,9 @@ export const meals = pgTable("meals", {
   type: text("type").notNull(), // breakfast, lunch, dinner
   price: integer("price").notNull().default(75), // Default price is Rs.75
   items: json("items").$type<string[]>().default([]), // Meal items for the day
+  startTime: text("start_time").notNull().default("07:00"), // Default times based on meal type
+  endTime: text("end_time").notNull().default("08:30"),
+  willingnessDeadline: text("willingness_deadline").notNull().default("03:00"), // Must mark willingness 4 hours before meal
   nutritionalInfo: json("nutritional_info").$type<{
     calories: number;
     protein: number;
@@ -36,7 +39,9 @@ export const mealPreferences = pgTable("meal_preferences", {
   lunch: boolean("lunch").notNull().default(true),
   dinner: boolean("dinner").notNull().default(true),
   fullDayLeave: boolean("full_day_leave").notNull().default(false),
-  dietaryRestrictions: json("dietary_restrictions").$type<string[]>().default([])
+  dietaryRestrictions: json("dietary_restrictions").$type<string[]>().default([]),
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(), // Track when the preferences were submitted
+  updatedAt: timestamp("updated_at").notNull().defaultNow() // Track when preferences were last updated
 });
 
 export const mealAttendance = pgTable("meal_attendance", {
@@ -46,7 +51,11 @@ export const mealAttendance = pgTable("meal_attendance", {
   mealType: text("meal_type").notNull(), // breakfast, lunch, dinner
   attended: boolean("attended").notNull().default(false),
   timestamp: timestamp("timestamp").notNull(),
-  hostelAttendanceSync: boolean("hostel_attendance_sync").default(false) // Flag if synced with hostel attendance
+  hostelAttendanceSync: boolean("hostel_attendance_sync").default(false), // Flag if synced with hostel attendance
+  wasWilling: boolean("was_willing").notNull().default(true), // Whether student marked willingness before deadline
+  physicallyVerified: boolean("physically_verified").default(false), // Physical verification at mess
+  verifiedBy: integer("verified_by"), // ID of staff who verified physical presence
+  verificationTimestamp: timestamp("verification_timestamp") // When physical verification was done
 });
 
 export const notifications = pgTable("notifications", {
@@ -106,6 +115,9 @@ export const insertMealSchema = createInsertSchema(meals).pick({
   type: true,
   price: true,
   items: true,
+  startTime: true,
+  endTime: true,
+  willingnessDeadline: true,
   nutritionalInfo: true
 });
 
@@ -116,7 +128,9 @@ export const insertMealPreferenceSchema = createInsertSchema(mealPreferences).pi
   lunch: true,
   dinner: true,
   fullDayLeave: true,
-  dietaryRestrictions: true
+  dietaryRestrictions: true,
+  submittedAt: true,
+  updatedAt: true
 });
 
 export const insertMealAttendanceSchema = createInsertSchema(mealAttendance).pick({
@@ -125,7 +139,11 @@ export const insertMealAttendanceSchema = createInsertSchema(mealAttendance).pic
   mealType: true,
   attended: true,
   timestamp: true,
-  hostelAttendanceSync: true
+  hostelAttendanceSync: true,
+  wasWilling: true,
+  physicallyVerified: true,
+  verifiedBy: true,
+  verificationTimestamp: true
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
