@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { useAuth } from '../../contexts/AuthContext';
 
 import {
@@ -28,7 +28,7 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const validateForm = () => {
     if (!displayName || !email || !password || !confirmPassword || !hostelRoom) {
@@ -65,7 +65,7 @@ const Register: React.FC = () => {
         hostelRoom
       });
       
-      navigate('/dashboard');
+      setLocation('/dashboard');
     } catch (error) {
       console.error('Registration error:', error);
       setError('Failed to create account. Email may already be in use.');
@@ -157,7 +157,7 @@ const Register: React.FC = () => {
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-gray-600 mt-2">
               Already have an account?{' '}
-              <Button variant="link" className="p-0" onClick={() => navigate('/login')}>
+              <Button variant="link" className="p-0" onClick={() => setLocation('/login')}>
                 Sign in
               </Button>
             </p>

@@ -24,7 +24,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +37,7 @@ const Login: React.FC = () => {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate('/dashboard');
+      setLocation('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to log in. Please check your credentials.');
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-gray-600 mt-2">
               Don't have an account?{' '}
-              <Button variant="link" className="p-0" onClick={() => navigate('/register')}>
+              <Button variant="link" className="p-0" onClick={() => setLocation('/register')}>
                 Register here
               </Button>
             </p>

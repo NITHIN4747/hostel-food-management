@@ -25,21 +25,22 @@ function PrivateRoute({ component: Component, path }: PrivateRouteProps) {
   return (
     <Route
       path={path}
-      component={currentUser ? Component : () => <Redirect to="/login" />}
-    />
+    >
+      {currentUser ? <Component /> : <Redirect to="/login" />}
+    </Route>
   );
 }
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <Redirect to="/login" />} />
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
+      <Route path="/"><Redirect to="/login" /></Route>
+      <Route path="/login"><Login /></Route>
+      <Route path="/register"><Register /></Route>
       <PrivateRoute path="/dashboard" component={StudentDashboard} />
       
       {/* Fallback to 404 */}
-      <Route component={NotFound} />
+      <Route><NotFound /></Route>
     </Switch>
   );
 }
