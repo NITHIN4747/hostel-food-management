@@ -8,19 +8,27 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
+} from "@/components/ui/card";
 import {
   Alert,
   AlertDescription,
-} from "../../components/ui/alert";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { FiUser, FiLock } from 'react-icons/fi';
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FiUser, FiLock, FiUserCheck } from 'react-icons/fi';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'student' | 'admin' | 'kitchen'>('student');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -41,8 +49,23 @@ const Login: React.FC = () => {
     try {
       setError('');
       setLoading(true);
-      await login(email, password);
-      setLocation('/dashboard');
+      
+      // Login the user with the selected role
+      await login(email, password, role);
+      
+      // Redirect based on role
+      switch (role) {
+        case 'admin':
+          setLocation('/admin/dashboard');
+          break;
+        case 'kitchen':
+          setLocation('/kitchen/dashboard');
+          break;
+        case 'student':
+        default:
+          setLocation('/student/dashboard');
+          break;
+      }
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to log in. Please check your credentials.');
@@ -80,7 +103,7 @@ const Login: React.FC = () => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder="youremail@ksrce.ac.in"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -106,6 +129,28 @@ const Login: React.FC = () => {
                   </div>
                 </div>
                 
+                <div className="grid gap-2">
+                  <Label htmlFor="role">Role</Label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-3 text-gray-400">
+                      <FiUserCheck />
+                    </div>
+                    <Select
+                      value={role}
+                      onValueChange={(value: 'student' | 'admin' | 'kitchen') => setRole(value)}
+                    >
+                      <SelectTrigger className="pl-10">
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="kitchen">Kitchen Supervisor</SelectItem>
+                        <SelectItem value="admin">Administrator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
@@ -115,10 +160,7 @@ const Login: React.FC = () => {
           
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-gray-600 mt-2">
-              Don't have an account?{' '}
-              <Button variant="link" className="p-0" onClick={() => setLocation('/register')}>
-                Register here
-              </Button>
+              Please contact hostel management if you don't have login credentials
             </p>
           </CardFooter>
         </Card>

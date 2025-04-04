@@ -20,7 +20,7 @@ interface UserData {
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: UserData | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, role?: 'student' | 'admin' | 'kitchen') => Promise<void>;
   register: (email: string, password: string, data: Omit<UserData, 'uid'>) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -44,8 +44,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const login = async (email: string, password: string) => {
-    await signInWithEmail(email, password);
+  const login = async (email: string, password: string, role?: 'student' | 'admin' | 'kitchen') => {
+    // First authenticate the user
+    const userCredential = await signInWithEmail(email, password);
+    
+    // If role is provided, update the user's role in Firestore
+    if (role && userCredential.user) {
+      const user = userCredential.user;
+      
+      // Check if user already exists in Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        
+        // Only update if role doesn't match
+        if (userData.role !== role) {
+          await setDoc(doc(db, 'users', user.uid), {
+            ...userData,
+            role: role
+          }, { merge: true });
+        }
+      } else {
+        // Create new user document with the selected role
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || email.split('@')[0],
+          role: role
+        });
+      }
+      
+      // Refresh user data
+      await fetchUserData(user);
+    }
   };
 
   const register = async (email: string, password: string, data: Omit<UserData, 'uid'>) => {
