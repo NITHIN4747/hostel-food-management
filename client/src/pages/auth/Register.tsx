@@ -1,307 +1,170 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+
 import {
-  Box,
-  Button,
-  Container,
-  Divider,
-  FormControl,
-  FormLabel,
-  Heading,
-  HStack,
-  Input,
-  Link,
-  Select,
-  Stack,
-  Text,
-  useToast,
-  FormErrorMessage,
-  IconButton,
-  InputGroup,
-  InputRightElement,
-} from "@chakra-ui/react";
-import { FcGoogle } from "react-icons/fc";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import { useAuth } from "../../hooks/useAuth";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import {
+  Alert,
+  AlertDescription,
+} from "../../components/ui/alert";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 
-const Register = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    displayName: "",
-    role: "student",
-    hostelRoom: "",
-  });
-  
-  const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    displayName: "",
-    hostelRoom: "",
-  });
-  
-  const [showPassword, setShowPassword] = useState(false);
+const Register: React.FC = () => {
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [hostelRoom, setHostelRoom] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { register, loginWithGoogle } = useAuth();
-  const [, navigate] = useLocation();
-  const toast = useToast();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    
-    // Clear error when user starts typing
-    if (errors[name as keyof typeof errors]) {
-      setErrors({
-        ...errors,
-        [name]: "",
-      });
-    }
-  };
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const validateForm = () => {
-    const newErrors = { ...errors };
-    let isValid = true;
-
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-      isValid = false;
+    if (!displayName || !email || !password || !confirmPassword || !hostelRoom) {
+      setError('All fields are required');
+      return false;
     }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-      isValid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-      isValid = false;
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return false;
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-      isValid = false;
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
     }
-
-    if (!formData.displayName) {
-      newErrors.displayName = "Name is required";
-      isValid = false;
-    }
-
-    if (formData.role === "student" && !formData.hostelRoom) {
-      newErrors.hostelRoom = "Hostel room is required for students";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
+    
+    return true;
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
-    setLoading(true);
     try {
-      const success = await register(
-        formData.email, 
-        formData.password, 
-        formData.displayName, 
-        formData.role, 
-        formData.hostelRoom
-      );
+      setError('');
+      setLoading(true);
       
-      if (success) {
-        toast({
-          title: "Account created.",
-          description: "We've created your account for you.",
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
-        navigate("/dashboard");
-      }
-    } catch (error) {
-      toast({
-        title: "An error occurred.",
-        description: "Unable to create your account. Please try again.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+      await register(email, password, {
+        displayName,
+        email,
+        role: 'student',
+        hostelRoom
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleRegister = async () => {
-    setLoading(true);
-    try {
-      const success = await loginWithGoogle();
-      if (success) {
-        navigate("/dashboard");
-      }
+      
+      navigate('/dashboard');
     } catch (error) {
-      toast({
-        title: "An error occurred.",
-        description: "Unable to sign up with Google. Please try again.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
+      console.error('Registration error:', error);
+      setError('Failed to create account. Email may already be in use.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container maxW="lg" py={{ base: "12", md: "24" }} px={{ base: "0", sm: "8" }}>
-      <Stack spacing="8">
-        <Stack spacing="6">
-          <Stack spacing={{ base: "2", md: "3" }} textAlign="center">
-            <Heading size={{ base: "xl", md: "2xl" }}>Create your account</Heading>
-            <Text color="gray.600">
-              Already have an account? <Link href="/login" color="blue.500">Sign in</Link>
-            </Text>
-          </Stack>
-        </Stack>
-
-        <Box
-          py={{ base: "0", sm: "8" }}
-          px={{ base: "4", sm: "10" }}
-          bg={{ base: "transparent", sm: "white" }}
-          boxShadow={{ base: "none", sm: "md" }}
-          borderRadius={{ base: "none", sm: "xl" }}
-        >
-          <form onSubmit={handleRegister}>
-            <Stack spacing="6">
-              <Stack spacing="5">
-                <FormControl isInvalid={!!errors.displayName}>
-                  <FormLabel htmlFor="displayName">Full Name</FormLabel>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center font-bold">Create an Account</CardTitle>
+            <CardDescription className="text-center">
+              Enter your details to register for the Hostel Meal System
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="displayName">Full Name</Label>
                   <Input
                     id="displayName"
-                    name="displayName"
-                    value={formData.displayName}
-                    onChange={handleChange}
+                    placeholder="John Doe"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    required
                   />
-                  {errors.displayName && <FormErrorMessage>{errors.displayName}</FormErrorMessage>}
-                </FormControl>
+                </div>
                 
-                <FormControl isInvalid={!!errors.email}>
-                  <FormLabel htmlFor="email">Email</FormLabel>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
-                    name="email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleChange}
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
-                  {errors.email && <FormErrorMessage>{errors.email}</FormErrorMessage>}
-                </FormControl>
+                </div>
                 
-                <FormControl isInvalid={!!errors.password}>
-                  <FormLabel htmlFor="password">Password</FormLabel>
-                  <InputGroup>
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                    />
-                    <InputRightElement>
-                      <IconButton
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                        icon={showPassword ? <FiEyeOff /> : <FiEye />}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowPassword(!showPassword)}
-                      />
-                    </InputRightElement>
-                  </InputGroup>
-                  {errors.password && <FormErrorMessage>{errors.password}</FormErrorMessage>}
-                </FormControl>
+                <div className="grid gap-2">
+                  <Label htmlFor="hostelRoom">Hostel Room</Label>
+                  <Input
+                    id="hostelRoom"
+                    placeholder="A-101"
+                    value={hostelRoom}
+                    onChange={(e) => setHostelRoom(e.target.value)}
+                    required
+                  />
+                </div>
                 
-                <FormControl isInvalid={!!errors.confirmPassword}>
-                  <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
                   <Input
                     id="confirmPassword"
-                    name="confirmPassword"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
                   />
-                  {errors.confirmPassword && <FormErrorMessage>{errors.confirmPassword}</FormErrorMessage>}
-                </FormControl>
+                </div>
                 
-                <FormControl>
-                  <FormLabel htmlFor="role">Role</FormLabel>
-                  <Select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                  >
-                    <option value="student">Student</option>
-                    <option value="warden">Warden</option>
-                    <option value="admin">Admin</option>
-                  </Select>
-                </FormControl>
-                
-                {formData.role === "student" && (
-                  <FormControl isInvalid={!!errors.hostelRoom}>
-                    <FormLabel htmlFor="hostelRoom">Hostel Room</FormLabel>
-                    <Input
-                      id="hostelRoom"
-                      name="hostelRoom"
-                      value={formData.hostelRoom}
-                      onChange={handleChange}
-                      placeholder="e.g. A-101"
-                    />
-                    {errors.hostelRoom && <FormErrorMessage>{errors.hostelRoom}</FormErrorMessage>}
-                  </FormControl>
-                )}
-              </Stack>
-              
-              <Stack spacing="4">
-                <Button 
-                  colorScheme="blue" 
-                  type="submit" 
-                  isLoading={loading}
-                  loadingText="Creating account..."
-                >
-                  Sign up
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
-                
-                <HStack>
-                  <Divider />
-                  <Text fontSize="sm" color="gray.500">OR</Text>
-                  <Divider />
-                </HStack>
-                
-                <Button 
-                  variant="outline" 
-                  leftIcon={<FcGoogle />} 
-                  onClick={handleGoogleRegister}
-                  isLoading={loading && !formData.email}
-                  loadingText="Signing up..."
-                >
-                  Sign up with Google
-                </Button>
-              </Stack>
-            </Stack>
-          </form>
-        </Box>
-      </Stack>
-    </Container>
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col">
+            <p className="text-center text-sm text-gray-600 mt-2">
+              Already have an account?{' '}
+              <Button variant="link" className="p-0" onClick={() => navigate('/login')}>
+                Sign in
+              </Button>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
   );
 };
 

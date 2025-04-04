@@ -1,84 +1,101 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Base user table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  uid: text("uid").notNull().unique(), // Firebase UID
   username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
   displayName: text("display_name").notNull(),
-  photoURL: text("photo_url"),
   role: text("role").notNull().default("student"),
-  hostelRoom: text("hostel_room"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  roomNumber: text("room_number"),
+  hostelId: text("hostel_id")
 });
 
-// Meal attendance records
+export const meals = pgTable("meals", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull(), // YYYY-MM-DD format
+  type: text("type").notNull(), // breakfast, lunch, dinner
+  price: integer("price").notNull().default(75), // Default price is Rs.75
+});
+
+export const mealPreferences = pgTable("meal_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  date: text("date").notNull(), // YYYY-MM-DD format
+  breakfast: boolean("breakfast").notNull().default(true),
+  lunch: boolean("lunch").notNull().default(true),
+  dinner: boolean("dinner").notNull().default(true),
+  fullDayLeave: boolean("full_day_leave").notNull().default(false)
+});
+
 export const mealAttendance = pgTable("meal_attendance", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  date: timestamp("date").notNull().defaultNow(),
+  userId: integer("user_id").notNull(),
+  date: text("date").notNull(), // YYYY-MM-DD format
   mealType: text("meal_type").notNull(), // breakfast, lunch, dinner
   attended: boolean("attended").notNull().default(false),
-  verificationMethod: text("verification_method"), // face, qr, manual
-  verifiedBy: integer("verified_by").references(() => users.id), // staff who verified
-  notes: text("notes"),
+  timestamp: timestamp("timestamp").notNull(),
 });
 
-// Leave requests
-export const leaveRequests = pgTable("leave_requests", {
+export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  reason: text("reason").notNull(),
-  status: text("status").notNull().default("pending"), // pending, approved, rejected
-  approvedBy: integer("approved_by").references(() => users.id),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  userId: integer("user_id").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").notNull().default(false),
+  timestamp: timestamp("timestamp").notNull(),
 });
 
-// Financial adjustments
-export const financialAdjustments = pgTable("financial_adjustments", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  month: text("month").notNull(), // YYYY-MM format
-  totalMeals: integer("total_meals").notNull(),
-  attendedMeals: integer("attended_meals").notNull(),
-  adjustmentAmount: integer("adjustment_amount").notNull(), // in cents
-  processed: boolean("processed").notNull().default(false),
-  processedAt: timestamp("processed_at"),
-  notes: text("notes"),
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  displayName: true,
+  role: true,
+  roomNumber: true,
+  hostelId: true
 });
 
-// Activities log
-export const activityLogs = pgTable("activity_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  activityType: text("activity_type").notNull(),
-  description: text("description").notNull(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const insertMealSchema = createInsertSchema(meals).pick({
+  date: true,
+  type: true,
+  price: true
 });
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
-export const insertMealAttendanceSchema = createInsertSchema(mealAttendance).omit({ id: true });
-export const insertLeaveRequestSchema = createInsertSchema(leaveRequests).omit({ id: true, createdAt: true });
-export const insertFinancialAdjustmentSchema = createInsertSchema(financialAdjustments).omit({ id: true });
-export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true, createdAt: true });
+export const insertMealPreferenceSchema = createInsertSchema(mealPreferences).pick({
+  userId: true,
+  date: true,
+  breakfast: true,
+  lunch: true,
+  dinner: true,
+  fullDayLeave: true
+});
 
-// Types
-export type User = typeof users.$inferSelect;
-export type MealAttendance = typeof mealAttendance.$inferSelect;
-export type LeaveRequest = typeof leaveRequests.$inferSelect;
-export type FinancialAdjustment = typeof financialAdjustments.$inferSelect;
-export type ActivityLog = typeof activityLogs.$inferSelect;
+export const insertMealAttendanceSchema = createInsertSchema(mealAttendance).pick({
+  userId: true,
+  date: true,
+  mealType: true,
+  attended: true,
+  timestamp: true
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).pick({
+  userId: true,
+  message: true,
+  read: true,
+  timestamp: true
+});
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export type InsertMeal = z.infer<typeof insertMealSchema>;
+export type Meal = typeof meals.$inferSelect;
+
+export type InsertMealPreference = z.infer<typeof insertMealPreferenceSchema>;
+export type MealPreference = typeof mealPreferences.$inferSelect;
+
 export type InsertMealAttendance = z.infer<typeof insertMealAttendanceSchema>;
-export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
-export type InsertFinancialAdjustment = z.infer<typeof insertFinancialAdjustmentSchema>;
-export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type MealAttendance = typeof mealAttendance.$inferSelect;
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

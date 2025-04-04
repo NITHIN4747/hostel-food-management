@@ -1,60 +1,93 @@
-import { createContext, useState, useEffect, ReactNode } from "react";
-import { User as FirebaseUser } from "firebase/auth";
-import { auth } from "../firebase/config";
-import { getUserData } from "../firebase/auth";
-import { useToast } from "@chakra-ui/react";
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
+import { 
+  signInWithEmail, 
+  registerWithEmail as registerUser, 
+  signOut as authSignOut, 
+  getUserData
+} from '../firebase/auth';
 
 interface UserData {
   uid: string;
   email: string;
   displayName: string;
-  photoURL?: string;
-  role: string;
+  role: 'student' | 'admin';
   hostelRoom?: string;
 }
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: UserData | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, data: Omit<UserData, 'uid'>) => Promise<void>;
+  logout: () => Promise<void>;
   loading: boolean;
-  setUserData: (data: UserData) => void;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   userData: null,
-  loading: true,
-  setUserData: () => {},
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  loading: true
 });
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
+  const [loading, setLoading] = useState<boolean>(true);
 
+  const login = async (email: string, password: string) => {
+    await signInWithEmail(email, password);
+  };
+
+  const register = async (email: string, password: string, data: Omit<UserData, 'uid'>) => {
+    const userCredential = await registerUser(email, password, data.displayName, data.role, data.hostelRoom);
+    const user = userCredential.user;
+    
+    // Add user to Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
+      ...data
+    });
+  };
+
+  const logout = async () => {
+    await authSignOut();
+  };
+
+  // Fetch user data from Firestore
+  const fetchUserData = async (user: FirebaseUser) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as UserData;
+        setUserData(userData);
+      } else {
+        console.log('No user data found in Firestore');
+        setUserData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setUserData(null);
+    }
+  };
+
+  // Listen for auth state changes
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       
       if (user) {
-        try {
-          const { data, error } = await getUserData(user);
-          
-          if (error) {
-            toast({
-              title: "Error fetching user data",
-              description: error,
-              status: "error",
-              duration: 5000,
-              isClosable: true,
-            });
-          } else if (data) {
-            setUserData(data as UserData);
-          }
-        } catch (err) {
-          console.error("Error in auth state change:", err);
-        }
+        await fetchUserData(user);
       } else {
         setUserData(null);
       }
@@ -62,14 +95,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [toast]);
+    return unsubscribe;
+  }, []);
 
   const value = {
     currentUser,
     userData,
-    loading,
-    setUserData,
+    login,
+    register,
+    logout,
+    loading
   };
 
   return (
@@ -77,4 +112,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  return React.useContext(AuthContext);
 };
