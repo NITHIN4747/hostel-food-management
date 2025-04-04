@@ -1,124 +1,107 @@
-Hostel Food Management System
+🍽️ Hostel Food Management System
+A smart, efficient web application built to simplify hostel meal management, monitor food inventory, and track attendance. Developed with love by TrioLogic during a 24-hour hackathon.
 
-📖 Overview
+🚀 Project Overview
+The Hostel Food Management System streamlines daily hostel food operations. It provides a centralized dashboard for admins, supervisors, and students to manage meals, track inventory, and ensure nothing goes to waste.
 
-The Hostel Food Management System is a web-based platform designed to efficiently manage hostel meal planning, kitchen inventory, and student meal attendance. It streamlines food distribution, reduces waste, and enhances meal tracking.
+🧑‍💻 Team: TrioLogic
+👨‍💼 NITHIN. K – Team Lead & Backend Developer
 
+🧠 Raghul N.S – UI/UX & Integration
 
-🚀 Features
+🧰 Thibish D – Firebase & Functional Modules
 
+📦 Features
+🛠 Admin Dashboard
+View total students, today's attendance, and inventory status
 
-🔹 Admin Dashboard
+Manage students and kitchen staff
 
-📊 Overview Statistics (Total students, Today's Meal Attendance, Available Inventory)
+Set daily/weekly menu and meal schedules
 
-👥 User Management (Add/remove students & kitchen staff, View attendance records)
+Generate basic reports
 
-📅 Meal Planning & Scheduling (Update menus, Track student meal preferences)
+🍳 Kitchen Supervisor Dashboard
+Track daily student attendance
 
-📦 Inventory Management (Stock updates, Low-stock alerts)
+Monitor ingredient stock and reorder when needed
 
-📋 Basic Reports (Daily meal consumption, Food stock levels)
+Notify students about meal updates
 
+Assign roles and tasks to kitchen staff
 
+🧑‍🎓 Student Portal
+Register meal preferences
 
-🔹 Kitchen Supervisor Dashboard
+Receive real-time updates about meals
 
-🍽 Daily Meal Attendance Tracking
+Submit feedback about food quality and service
 
-🛒 Food Stock Usage & Reordering
-
-📢 Meal Notifications for Students
-
-🔄 Task Assignment for Kitchen Staff
-
-
-
-🔹 Student Portal
-
-✅ Meal Registration & Preferences
-
-📢 Notifications on Meal Timings & Menu Updates
-
-📝 Feedback System (Rate meals, Provide suggestions)
-
-
-
-🛠️ Tech Stack
-
+⚙️ Tech Stack
 Frontend: React, Tailwind CSS, Vite
 
-Backend: Node.js, Express, Firebase
+Backend: Node.js, Express
 
-Database: Firebase Firestore
+Database & Auth: Firebase Firestore, Firebase Auth
 
-Authentication: Firebase Auth
+🧾 Codebase Languages
 
+Breakdown:
 
+🟦 TypeScript: 95.1%
 
-🔧 Installation
+🟨 JavaScript: 4.7%
 
-1️⃣ Clone the Repository
+⚙️ Other: 0.2%
 
+📂 Folder Structure:
+
+src/components/ (UI Components)
+
+src/pages/ (Dashboard, Login, Supervisor)
+
+src/hooks/ (Custom Hooks)
+
+src/firebase/ (Firebase Configs)
+
+🔧 Setup & Installation
+Clone the Repo
+
+bash
+Copy
+Edit
 git clone https://github.com/NITHIN4747/hostel-food-management.git
 cd hostel-food-management
+Install Dependencies
 
-2️⃣ Install Dependencies
-
+bash
+Copy
+Edit
 npm install
+Set Environment Variables Create a .env file in the root directory and add:
 
-3️⃣ Setup Environment Variables
-
-Create a .env file in the root directory and add your Firebase credentials:
-
+env
+Copy
+Edit
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
 VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
+Start the Dev Server
 
-4️⃣ Run the Project
-
+bash
+Copy
+Edit
 npm run dev
+🔮 Future Enhancements
+AI-powered meal forecasting based on attendance
 
-Access the project at http://localhost:5173/
+Mobile application support
 
-
-
-📂 Project Structure
-
-📦 hostel-food-management
- ┣ 📂 src
- ┃ ┣ 📂 components  # Reusable UI components
- ┃ ┣ 📂 pages       # Dashboard, Login, Supervisor Pages
- ┃ ┣ 📂 hooks       # Custom React hooks
- ┃ ┣ 📂 context     # Global state management
- ┃ ┣ 📂 firebase    # Firebase configurations
- ┃ ┣ 📜 App.jsx     # Main application file
- ┣ 📜 package.json  # Dependencies
- ┣ 📜 README.md     # Project documentation
-
- 
-
-📝 Future Enhancements
-
-📌 AI-based meal prediction
-
-📌 Mobile App Support
-
-📌 Integration with Payment Gateway for meal charges
+Integration with hostel payment system
 
 
-
-🚀 Developed by TrioLogic for Hackathon
-
-👥 Team Members
-
-NITHIN. K - Team Lead
-
-RAGHUL .N.S
-
-THIBISH .D
 
 
