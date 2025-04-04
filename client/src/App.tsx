@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
 import NotFound from "./pages/not-found";
 import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import KitchenDashboard from "./pages/dashboard/KitchenDashboard";
@@ -92,6 +93,7 @@ function Router() {
     <Switch>
       <Route path="/"><Redirect to="/dashboard" /></Route>
       <Route path="/login"><Login /></Route>
+      <Route path="/register"><Register /></Route>
       
       {/* Role-specific dashboards */}
       <PrivateRoute path="/dashboard" component={RoleDashboardRedirect} />

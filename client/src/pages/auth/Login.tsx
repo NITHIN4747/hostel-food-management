@@ -160,7 +160,10 @@ const Login: React.FC = () => {
           
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-gray-600 mt-2">
-              Please contact hostel management if you don't have login credentials
+              Don't have an account?{' '}
+              <Button variant="link" className="p-0" onClick={() => setLocation('/register')}>
+                Register now
+              </Button>
             </p>
           </CardFooter>
         </Card>
