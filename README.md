@@ -4,7 +4,9 @@ Hostel Food Management System
 
 The Hostel Food Management System is a web-based platform designed to efficiently manage hostel meal planning, kitchen inventory, and student meal attendance. It streamlines food distribution, reduces waste, and enhances meal tracking.
 
+
 🚀 Features
+
 
 🔹 Admin Dashboard
 
@@ -18,6 +20,8 @@ The Hostel Food Management System is a web-based platform designed to efficientl
 
 📋 Basic Reports (Daily meal consumption, Food stock levels)
 
+
+
 🔹 Kitchen Supervisor Dashboard
 
 🍽 Daily Meal Attendance Tracking
@@ -28,6 +32,8 @@ The Hostel Food Management System is a web-based platform designed to efficientl
 
 🔄 Task Assignment for Kitchen Staff
 
+
+
 🔹 Student Portal
 
 ✅ Meal Registration & Preferences
@@ -35,6 +41,8 @@ The Hostel Food Management System is a web-based platform designed to efficientl
 📢 Notifications on Meal Timings & Menu Updates
 
 📝 Feedback System (Rate meals, Provide suggestions)
+
+
 
 🛠️ Tech Stack
 
@@ -45,6 +53,8 @@ Backend: Node.js, Express, Firebase
 Database: Firebase Firestore
 
 Authentication: Firebase Auth
+
+
 
 🔧 Installation
 
@@ -74,6 +84,8 @@ npm run dev
 
 Access the project at http://localhost:5173/
 
+
+
 📂 Project Structure
 
 📦 hostel-food-management
@@ -87,6 +99,8 @@ Access the project at http://localhost:5173/
  ┣ 📜 package.json  # Dependencies
  ┣ 📜 README.md     # Project documentation
 
+ 
+
 📝 Future Enhancements
 
 📌 AI-based meal prediction
@@ -95,12 +109,16 @@ Access the project at http://localhost:5173/
 
 📌 Integration with Payment Gateway for meal charges
 
-🤝 Contributing
 
-Contributions are welcome! Feel free to submit pull requests.
-
-📜 License
-
-This project is open-source under the MIT License.
 
 🚀 Developed by TrioLogic for Hackathon
+
+👥 Team Members
+
+NITHIN. K - Team Lead
+
+RAGHUL .N.S
+
+THIBISH .D
+
+
