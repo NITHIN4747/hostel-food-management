@@ -1,4 +1,5 @@
 🍽️ Hostel Food Management System
+
 A smart, efficient web application built to simplify hostel meal management, monitor food inventory, and track attendance. Developed with love by TrioLogic during a 24-hour hackathon.
 
 🚀 Project Overview
@@ -12,7 +13,9 @@ The Hostel Food Management System streamlines daily hostel food operations. It p
 🧰 Thibish D – Firebase & Functional Modules
 
 📦 Features
+
 🛠 Admin Dashboard
+
 View total students, today's attendance, and inventory status
 
 Manage students and kitchen staff
@@ -21,7 +24,9 @@ Set daily/weekly menu and meal schedules
 
 Generate basic reports
 
+
 🍳 Kitchen Supervisor Dashboard
+
 Track daily student attendance
 
 Monitor ingredient stock and reorder when needed
@@ -30,19 +35,24 @@ Notify students about meal updates
 
 Assign roles and tasks to kitchen staff
 
+
 🧑‍🎓 Student Portal
+
 Register meal preferences
 
 Receive real-time updates about meals
 
 Submit feedback about food quality and service
 
+
 ⚙️ Tech Stack
+
 Frontend: React, Tailwind CSS, Vite
 
 Backend: Node.js, Express
 
 Database & Auth: Firebase Firestore, Firebase Auth
+
 
 🧾 Codebase Languages
 
@@ -54,6 +64,8 @@ Breakdown:
 
 ⚙️ Other: 0.2%
 
+
+
 📂 Folder Structure:
 
 src/components/ (UI Components)
@@ -63,6 +75,8 @@ src/pages/ (Dashboard, Login, Supervisor)
 src/hooks/ (Custom Hooks)
 
 src/firebase/ (Firebase Configs)
+
+
 
 🔧 Setup & Installation
 Clone the Repo
@@ -95,6 +109,9 @@ bash
 Copy
 Edit
 npm run dev
+
+
+
 🔮 Future Enhancements
 AI-powered meal forecasting based on attendance
 
