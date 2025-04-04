@@ -65,19 +65,6 @@ Breakdown:
 ⚙️ Other: 0.2%
 
 
-
-📂 Folder Structure:
-
-src/components/ (UI Components)
-
-src/pages/ (Dashboard, Login, Supervisor)
-
-src/hooks/ (Custom Hooks)
-
-src/firebase/ (Firebase Configs)
-
-
-
 🔧 Setup & Installation
 Clone the Repo
 
