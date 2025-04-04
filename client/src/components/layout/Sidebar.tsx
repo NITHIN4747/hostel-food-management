@@ -1,40 +1,16 @@
-import { useState, useEffect } from "react";
+import React from 'react';
+import { useLocation, Link } from 'wouter';
+import { useAuth } from '@/hooks/useAuth';
 import { 
-  Box, 
-  Flex, 
-  Text, 
-  Icon, 
-  Link as ChakraLink, 
-  Image, 
-  Button, 
-  Divider,
-  useDisclosure,
-  Drawer,
-  DrawerBody,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-  useBreakpointValue,
-  Avatar,
-  VStack,
-  HStack
-} from "@chakra-ui/react";
-import { Link, useLocation } from "wouter";
-import { useAuth } from "../../hooks/useAuth";
-import { 
-  FiHome, 
-  FiCalendar, 
-  FiUsers, 
-  FiSettings, 
-  FiLogOut, 
-  FiMenu,
-  FiBarChart2,
-  FiUtensils,
-  FiPaperclip
-} from "react-icons/fi";
+  Home, 
+  CalendarCheck, 
+  Clock, 
+  FileText, 
+  Settings, 
+  LogOut,
+  User
+} from 'lucide-react';
 
-// Navigation link component
 interface NavLinkProps {
   to: string;
   icon: React.ReactElement;
@@ -46,204 +22,112 @@ interface NavLinkProps {
 const NavLink = ({ to, icon, children, isActive, onClick }: NavLinkProps) => {
   return (
     <Link href={to}>
-      <ChakraLink
-        display="flex"
-        alignItems="center"
-        px="3"
-        py="2"
-        rounded="md"
-        fontSize="sm"
-        fontWeight="medium"
+      <a
+        className={`flex items-center px-4 py-3 text-sm rounded-md ${
+          isActive ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+        }`}
         onClick={onClick}
-        bg={isActive ? "blue.50" : "transparent"}
-        color={isActive ? "blue.600" : "gray.700"}
-        _hover={{ bg: isActive ? "blue.50" : "gray.100" }}
-        textDecoration="none"
       >
-        <Box color={isActive ? "blue.500" : "gray.500"} mr="3">
-          {icon}
-        </Box>
+        <span className="mr-3">{icon}</span>
         {children}
-      </ChakraLink>
+      </a>
     </Link>
   );
 };
 
-const Sidebar = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { userData, logout, isAdmin, isWarden } = useAuth();
+export default function Sidebar() {
   const [location] = useLocation();
-  const isMobile = useBreakpointValue({ base: true, md: false });
-  
-  // Close drawer when navigating on mobile
-  useEffect(() => {
-    if (isMobile && isOpen) {
-      onClose();
-    }
-  }, [location, isMobile, isOpen, onClose]);
+  const { currentUser, userData, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const logoSection = (
-    <Flex px="6" py="4" alignItems="center" borderBottomWidth="1px" justifyContent={isMobile ? "space-between" : "center"}>
-      <Flex alignItems="center">
-        <Box bg="blue.500" color="white" p="2" rounded="md">
-          <Icon as={FiHome} />
-        </Box>
-        <Text ml="3" fontWeight="bold" fontSize="lg" color="gray.800">
-          HostelTrack
-        </Text>
-      </Flex>
-      {isMobile && (
-        <Button variant="ghost" onClick={onClose}>
-          <Icon as={FiMenu} />
-        </Button>
-      )}
-    </Flex>
-  );
+  if (!currentUser || !userData) return null;
 
-  const navigationLinks = (
-    <VStack spacing="1" align="stretch" p="4">
-      <Text fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mb="2">
-        Main
-      </Text>
-      
-      <NavLink to="/dashboard" icon={<Icon as={FiHome} />} isActive={location === "/dashboard"} onClick={onClose}>
-        Dashboard
-      </NavLink>
-      
-      <NavLink to="/attendance" icon={<Icon as={FiCalendar} />} isActive={location === "/attendance"} onClick={onClose}>
-        Attendance
-      </NavLink>
-      
-      <NavLink to="/meals" icon={<Icon as={FiUtensils} />} isActive={location === "/meals"} onClick={onClose}>
-        Meal Tracking
-      </NavLink>
-      
-      <NavLink to="/reports" icon={<Icon as={FiBarChart2} />} isActive={location === "/reports"} onClick={onClose}>
-        Reports
-      </NavLink>
-      
-      <NavLink to="/leave" icon={<Icon as={FiPaperclip} />} isActive={location === "/leave"} onClick={onClose}>
-        Leave Management
-      </NavLink>
-      
-      {(isAdmin || isWarden) && (
-        <>
-          <Text fontSize="xs" fontWeight="semibold" color="gray.500" textTransform="uppercase" letterSpacing="wider" mt="8" mb="2">
-            Admin
-          </Text>
-          
-          <NavLink to="/users" icon={<Icon as={FiUsers} />} isActive={location === "/users"} onClick={onClose}>
-            User Management
-          </NavLink>
-          
-          <NavLink to="/settings" icon={<Icon as={FiSettings} />} isActive={location === "/settings"} onClick={onClose}>
-            Settings
-          </NavLink>
-        </>
-      )}
-    </VStack>
-  );
-
-  const userProfile = (
-    <Flex borderTopWidth="1px" p="4" display={isMobile ? "none" : "flex"}>
-      <Flex align="center" width="100%">
-        <Avatar size="sm" src={userData?.photoURL || undefined} name={userData?.displayName} />
-        <Box ml="3" overflow="hidden">
-          <Text fontSize="sm" fontWeight="medium" color="gray.700" noOfLines={1}>
-            {userData?.displayName}
-          </Text>
-          <Text fontSize="xs" fontWeight="medium" color="gray.500" noOfLines={1}>
-            {userData?.role.charAt(0).toUpperCase() + userData?.role.slice(1)}
-          </Text>
-        </Box>
-        <Button ml="auto" variant="ghost" onClick={handleLogout} aria-label="Sign out">
-          <Icon as={FiLogOut} />
-        </Button>
-      </Flex>
-    </Flex>
-  );
-
-  // Mobile drawer component
-  const mobileDrawer = (
-    <>
-      <Button
-        display={{ base: "flex", md: "none" }}
-        position="fixed"
-        top="4"
-        left="4"
-        zIndex="20"
-        onClick={onOpen}
-        aria-label="Open menu"
-        variant="outline"
-      >
-        <Icon as={FiMenu} />
-      </Button>
-      
-      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerCloseButton />
-          {logoSection}
-          <DrawerBody p="0">
-            {navigationLinks}
-            <Divider my="4" />
-            <Box p="4">
-              <HStack>
-                <Avatar size="sm" src={userData?.photoURL || undefined} name={userData?.displayName} />
-                <Box flex="1">
-                  <Text fontSize="sm" fontWeight="medium">{userData?.displayName}</Text>
-                  <Text fontSize="xs" color="gray.500">{userData?.role}</Text>
-                </Box>
-              </HStack>
-              <Button 
-                mt="4" 
-                leftIcon={<Icon as={FiLogOut} />} 
-                colorScheme="red" 
-                variant="outline" 
-                size="sm" 
-                width="full" 
-                onClick={handleLogout}
-              >
-                Sign Out
-              </Button>
-            </Box>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
-    </>
-  );
-
-  // Desktop sidebar component
-  const desktopSidebar = (
-    <Box
-      as="aside"
-      bg="white"
-      borderRightWidth="1px"
-      w="64"
-      position="fixed"
-      inset="0"
-      display={{ base: "none", md: "flex" }}
-      flexDir="column"
-      zIndex="10"
-    >
-      {logoSection}
-      <Box flex="1" overflowY="auto">
-        {navigationLinks}
-      </Box>
-      {userProfile}
-    </Box>
-  );
+  const isAdmin = userData.role === 'admin';
 
   return (
-    <>
-      {mobileDrawer}
-      {desktopSidebar}
-    </>
+    <div className="flex flex-col w-64 bg-white border-r">
+      <div className="flex flex-col flex-1 pt-5 pb-4 overflow-y-auto">
+        <div className="flex items-center justify-center flex-shrink-0 px-4 mb-5">
+          <h1 className="text-xl font-bold text-primary">Hostel Meal System</h1>
+        </div>
+        
+        <div className="px-3 mb-6">
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                  <User className="text-gray-600" size={20} />
+                </div>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">{userData.displayName}</p>
+                <p className="text-xs text-gray-500 capitalize">{userData.role}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="flex-1 px-2 space-y-1">
+          <NavLink 
+            to="/dashboard" 
+            icon={<Home size={18} />} 
+            isActive={location === '/dashboard'}
+          >
+            Dashboard
+          </NavLink>
+          
+          <NavLink 
+            to="/meal-preferences" 
+            icon={<CalendarCheck size={18} />} 
+            isActive={location === '/meal-preferences'}
+          >
+            Meal Preferences
+          </NavLink>
+          
+          <NavLink 
+            to="/attendance" 
+            icon={<Clock size={18} />} 
+            isActive={location === '/attendance'}
+          >
+            Attendance
+          </NavLink>
+          
+          <NavLink 
+            to="/leave-requests" 
+            icon={<FileText size={18} />} 
+            isActive={location === '/leave-requests'}
+          >
+            Leave Requests
+          </NavLink>
+          
+          {isAdmin && (
+            <NavLink 
+              to="/admin" 
+              icon={<Settings size={18} />} 
+              isActive={location.startsWith('/admin')}
+            >
+              Admin Panel
+            </NavLink>
+          )}
+        </nav>
+      </div>
+      
+      <div className="p-4 border-t">
+        <button
+          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
+          onClick={handleLogout}
+        >
+          <LogOut size={18} className="mr-3" />
+          Logout
+        </button>
+      </div>
+    </div>
   );
-};
-
-export default Sidebar;
+}

@@ -6,6 +6,7 @@ import NotFound from "./pages/not-found";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import LeaveRequestPage from "./pages/leave/LeaveRequestPage";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 interface PrivateRouteProps {
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/login"><Login /></Route>
       <Route path="/register"><Register /></Route>
       <PrivateRoute path="/dashboard" component={StudentDashboard} />
+      <PrivateRoute path="/leave-requests" component={LeaveRequestPage} />
       
       {/* Fallback to 404 */}
       <Route><NotFound /></Route>

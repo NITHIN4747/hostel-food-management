@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useToast } from "@chakra-ui/react";
+import { toast } from "../hooks/use-toast";
 import { 
   signInWithEmail, 
   registerWithEmail, 
@@ -10,8 +10,7 @@ import {
 } from "../firebase/auth";
 
 export const useAuth = () => {
-  const { currentUser, userData, loading, setUserData } = useContext(AuthContext);
-  const toast = useToast();
+  const { currentUser, userData, loading } = useContext(AuthContext);
 
   const login = async (email: string, password: string) => {
     const { user, error } = await signInWithEmail(email, password);
@@ -20,18 +19,14 @@ export const useAuth = () => {
       toast({
         title: "Login failed",
         description: error,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+        variant: "destructive",
       });
       return false;
     }
     
     toast({
       title: "Login successful",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
+      description: "Welcome back!",
     });
     return true;
   };
@@ -43,18 +38,14 @@ export const useAuth = () => {
       toast({
         title: "Google login failed",
         description: error,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+        variant: "destructive",
       });
       return false;
     }
     
     toast({
       title: "Login successful",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
+      description: "Welcome back!",
     });
     return true;
   };
@@ -66,9 +57,7 @@ export const useAuth = () => {
       toast({
         title: "Registration failed",
         description: error,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+        variant: "destructive",
       });
       return false;
     }
@@ -76,9 +65,6 @@ export const useAuth = () => {
     toast({
       title: "Registration successful",
       description: "Your account has been created.",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
     });
     return true;
   };
@@ -90,9 +76,7 @@ export const useAuth = () => {
       toast({
         title: "Password reset failed",
         description: error,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+        variant: "destructive",
       });
       return false;
     }
@@ -100,9 +84,6 @@ export const useAuth = () => {
     toast({
       title: "Password reset email sent",
       description: "Check your email for password reset instructions.",
-      status: "success",
-      duration: 5000,
-      isClosable: true,
     });
     return true;
   };
@@ -114,18 +95,13 @@ export const useAuth = () => {
       toast({
         title: "Logout failed",
         description: error,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+        variant: "destructive",
       });
       return false;
     }
     
     toast({
       title: "Logged out successfully",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
     });
     return true;
   };
@@ -141,7 +117,6 @@ export const useAuth = () => {
     logout,
     isAuthenticated: !!currentUser,
     isAdmin: userData?.role === "admin",
-    isWarden: userData?.role === "warden" || userData?.role === "admin",
     isStudent: userData?.role === "student",
   };
 };

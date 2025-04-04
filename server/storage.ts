@@ -3,7 +3,8 @@ import {
   meals, type Meal, type InsertMeal,
   mealPreferences, type MealPreference, type InsertMealPreference,
   mealAttendance, type MealAttendance, type InsertMealAttendance,
-  notifications, type Notification, type InsertNotification
+  notifications, type Notification, type InsertNotification,
+  leaveRequests, type LeaveRequest, type InsertLeaveRequest
 } from "../shared/schema";
 
 export interface IStorage {
@@ -31,6 +32,12 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
   
+  // Leave Requests
+  getLeaveRequests(userId?: number, status?: string): Promise<LeaveRequest[]>;
+  getLeaveRequestById(id: number): Promise<LeaveRequest | undefined>;
+  createLeaveRequest(leaveRequest: InsertLeaveRequest): Promise<LeaveRequest>;
+  updateLeaveRequestStatus(id: number, status: string): Promise<LeaveRequest | undefined>;
+  
   // Reports
   getFinancialSummary(userId: number, startDate: string, endDate: string): Promise<any>;
   getFoodWastageReport(startDate: string, endDate: string): Promise<any>;
@@ -42,12 +49,14 @@ export class MemStorage implements IStorage {
   private mealPreferences: Map<number, MealPreference>;
   private mealAttendance: Map<number, MealAttendance>;
   private notifications: Map<number, Notification>;
+  private leaveRequests: Map<number, LeaveRequest>;
   
   private userIdCounter: number;
   private mealIdCounter: number;
   private preferenceIdCounter: number;
   private attendanceIdCounter: number;
   private notificationIdCounter: number;
+  private leaveRequestIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -55,12 +64,14 @@ export class MemStorage implements IStorage {
     this.mealPreferences = new Map();
     this.mealAttendance = new Map();
     this.notifications = new Map();
+    this.leaveRequests = new Map();
     
     this.userIdCounter = 1;
     this.mealIdCounter = 1;
     this.preferenceIdCounter = 1;
     this.attendanceIdCounter = 1;
     this.notificationIdCounter = 1;
+    this.leaveRequestIdCounter = 1;
     
     // Initialize with some default meals
     this.setupDefaultMeals();
@@ -212,6 +223,51 @@ export class MemStorage implements IStorage {
     const updatedNotification = { ...notification, read: true };
     this.notifications.set(id, updatedNotification);
     return updatedNotification;
+  }
+  
+  // Leave Request methods
+  async getLeaveRequests(userId?: number, status?: string): Promise<LeaveRequest[]> {
+    let requests = Array.from(this.leaveRequests.values());
+    
+    if (userId) {
+      requests = requests.filter(req => req.userId === userId);
+    }
+    
+    if (status) {
+      requests = requests.filter(req => req.status === status);
+    }
+    
+    // Sort by timestamp, newest first
+    requests.sort((a, b) => {
+      const dateA = new Date(a.timestamp);
+      const dateB = new Date(b.timestamp);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return requests;
+  }
+  
+  async getLeaveRequestById(id: number): Promise<LeaveRequest | undefined> {
+    return this.leaveRequests.get(id);
+  }
+  
+  async createLeaveRequest(insertLeaveRequest: InsertLeaveRequest): Promise<LeaveRequest> {
+    const id = this.leaveRequestIdCounter++;
+    const leaveRequest = { ...insertLeaveRequest, id };
+    this.leaveRequests.set(id, leaveRequest);
+    return leaveRequest;
+  }
+  
+  async updateLeaveRequestStatus(id: number, status: string): Promise<LeaveRequest | undefined> {
+    const leaveRequest = this.leaveRequests.get(id);
+    
+    if (!leaveRequest) {
+      return undefined;
+    }
+    
+    const updatedLeaveRequest = { ...leaveRequest, status };
+    this.leaveRequests.set(id, updatedLeaveRequest);
+    return updatedLeaveRequest;
   }
   
   // Report methods

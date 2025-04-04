@@ -46,6 +46,12 @@ const Register: React.FC = () => {
       return false;
     }
     
+    // Validate email domain - must be @ksrce.ac.in
+    if (!email.endsWith('@ksrce.ac.in')) {
+      setError('Email must be from the college domain (@ksrce.ac.in)');
+      return false;
+    }
+    
     return true;
   };
 

@@ -6,7 +6,8 @@ import {
   insertMealSchema,
   insertMealPreferenceSchema,
   insertMealAttendanceSchema,
-  insertNotificationSchema
+  insertNotificationSchema,
+  insertLeaveRequestSchema
 } from "../shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -205,6 +206,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(notification);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  // Leave Requests API
+  app.post("/api/leave-requests", async (req, res) => {
+    try {
+      const leaveRequestData = insertLeaveRequestSchema.parse(req.body);
+      const leaveRequest = await storage.createLeaveRequest({
+        ...leaveRequestData,
+        timestamp: new Date()
+      });
+      res.status(201).json(leaveRequest);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/leave-requests", async (req, res) => {
+    try {
+      const { userId, status } = req.query;
+      
+      const requests = await storage.getLeaveRequests(
+        userId ? parseInt(userId as string) : undefined,
+        status as string | undefined
+      );
+      
+      res.json(requests);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/leave-requests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const leaveRequest = await storage.getLeaveRequestById(id);
+      
+      if (!leaveRequest) {
+        return res.status(404).json({ error: "Leave request not found" });
+      }
+      
+      res.json(leaveRequest);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.patch("/api/leave-requests/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !['pending', 'approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Valid status is required" });
+      }
+      
+      const leaveRequest = await storage.updateLeaveRequestStatus(id, status);
+      
+      if (!leaveRequest) {
+        return res.status(404).json({ error: "Leave request not found" });
+      }
+      
+      res.json(leaveRequest);
     } catch (error) {
       handleError(res, error);
     }

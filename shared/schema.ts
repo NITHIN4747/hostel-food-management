@@ -46,6 +46,17 @@ export const notifications = pgTable("notifications", {
   timestamp: timestamp("timestamp").notNull(),
 });
 
+// New table for leave requests (for skipping meals that were marked as willing)
+export const leaveRequests = pgTable("leave_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  date: text("date").notNull(), // YYYY-MM-DD format
+  mealType: text("meal_type").notNull(), // breakfast, lunch, dinner
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  timestamp: timestamp("timestamp").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -85,6 +96,15 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
   timestamp: true
 });
 
+export const insertLeaveRequestSchema = createInsertSchema(leaveRequests).pick({
+  userId: true,
+  date: true,
+  mealType: true,
+  reason: true,
+  status: true,
+  timestamp: true
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -99,3 +119,6 @@ export type MealAttendance = typeof mealAttendance.$inferSelect;
 
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+
+export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
+export type LeaveRequest = typeof leaveRequests.$inferSelect;

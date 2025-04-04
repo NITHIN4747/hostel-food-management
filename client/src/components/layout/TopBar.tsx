@@ -1,131 +1,42 @@
-import { 
-  Box, 
-  Flex, 
-  Heading, 
-  IconButton, 
-  Menu, 
-  MenuButton, 
-  MenuList, 
-  MenuItem, 
-  Button, 
-  useColorModeValue,
-  Avatar,
-  Text,
-  Badge,
-  HStack,
-  useBreakpointValue
-} from "@chakra-ui/react";
-import { FiBell, FiChevronDown, FiLogOut } from "react-icons/fi";
-import { useLocation } from "wouter";
-import { useAuth } from "../../hooks/useAuth";
+import React from 'react';
+import { Bell, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TopBarProps {
   title: string;
 }
 
 const TopBar = ({ title }: TopBarProps) => {
-  const { userData, logout } = useAuth();
-  const [location] = useLocation();
-  const isMobile = useBreakpointValue({ base: true, md: false });
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   
-  const bg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  
-  const handleLogout = async () => {
-    await logout();
+  // This would be implemented to toggle sidebar on mobile
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
-  
-  const getPageTitle = () => {
-    switch (location) {
-      case "/dashboard":
-        return "Dashboard";
-      case "/attendance":
-        return "Attendance Tracking";
-      case "/meals":
-        return "Meal Tracking";
-      case "/reports":
-        return "Reports";
-      case "/leave":
-        return "Leave Management";
-      case "/users":
-        return "User Management";
-      case "/settings":
-        return "Settings";
-      default:
-        return title;
-    }
-  };
-  
+
   return (
-    <Box
-      as="header"
-      bg={bg}
-      borderBottomWidth="1px"
-      borderColor={borderColor}
-      shadow="sm"
-      position="sticky"
-      top="0"
-      zIndex="5"
-    >
-      <Flex
-        alignItems="center"
-        justifyContent="space-between"
-        mx="auto"
-        px={{ base: 4, md: 6, lg: 8 }}
-        h="16"
-      >
-        <Flex alignItems="center">
-          <Heading as="h2" size="md" fontWeight="semibold" color="gray.800">
-            {getPageTitle()}
-          </Heading>
-        </Flex>
-        
-        <HStack spacing="4">
-          <Box position="relative">
-            <IconButton
-              aria-label="Notifications"
-              icon={<FiBell />}
-              variant="ghost"
-              color="gray.500"
-              _hover={{ color: "gray.700" }}
-            />
-            <Badge
-              position="absolute"
-              top="0"
-              right="0"
-              transform="translate(30%, -30%)"
-              colorScheme="purple"
-              borderRadius="full"
-              p="1"
-              boxSize="2"
-            />
-          </Box>
-          
-          {isMobile ? (
-            <Avatar size="sm" src={userData?.photoURL || undefined} name={userData?.displayName} />
-          ) : (
-            <Menu>
-              <MenuButton as={Button} variant="ghost" rightIcon={<FiChevronDown />} px="2">
-                <HStack spacing="2">
-                  <Avatar size="sm" src={userData?.photoURL || undefined} name={userData?.displayName} />
-                  <Box textAlign="left" display={{ base: "none", md: "block" }}>
-                    <Text fontSize="sm" fontWeight="medium">{userData?.displayName}</Text>
-                    <Text fontSize="xs" color="gray.500">
-                      {userData?.role.charAt(0).toUpperCase() + userData?.role.slice(1)}
-                    </Text>
-                  </Box>
-                </HStack>
-              </MenuButton>
-              <MenuList>
-                <MenuItem icon={<FiLogOut />} onClick={handleLogout}>
-                  Sign Out
-                </MenuItem>
-              </MenuList>
-            </Menu>
-          )}
-        </HStack>
-      </Flex>
-    </Box>
+    <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 bg-white border-b">
+      <div className="flex items-center">
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-4">
+            <Menu className="w-5 h-5" />
+          </Button>
+        )}
+        <h1 className="text-xl font-semibold">{title}</h1>
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-1 right-1 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          </span>
+        </Button>
+      </div>
+    </header>
   );
 };
 

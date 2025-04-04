@@ -33,6 +33,11 @@ const Login: React.FC = () => {
       return setError('Please enter both email and password');
     }
     
+    // Validate email domain - must be @ksrce.ac.in
+    if (!email.endsWith('@ksrce.ac.in')) {
+      return setError('Email must be from the college domain (@ksrce.ac.in)');
+    }
+    
     try {
       setError('');
       setLoading(true);
