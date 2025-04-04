@@ -28,15 +28,25 @@ export const registerWithEmail = async (
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
-    // Create a user document in Firestore
-    await setDoc(doc(db, "users", user.uid), {
+    // Create a user document in Firestore with only the required fields
+    // to avoid invalid-argument errors with complex objects
+    const userData = {
       uid: user.uid,
       displayName,
       email,
       role,
-      hostelRoom: hostelRoom || '',
-      createdAt: new Date().toISOString() // Use ISO string for date to avoid serialization issues
-    });
+      createdAt: new Date().toISOString()
+    };
+    
+    // Only add hostelRoom if it's defined and not empty
+    if (hostelRoom) {
+      await setDoc(doc(db, "users", user.uid), {
+        ...userData,
+        hostelRoom
+      });
+    } else {
+      await setDoc(doc(db, "users", user.uid), userData);
+    }
     
     return userCredential;
   } catch (error) {

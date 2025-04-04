@@ -21,7 +21,7 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: UserData | null;
   login: (email: string, password: string, role?: 'student' | 'admin' | 'kitchen') => Promise<void>;
-  register: (email: string, password: string, data: Omit<UserData, 'uid'>) => Promise<void>;
+  register: (email: string, password: string, data: Omit<UserData, 'uid'>) => Promise<any>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -81,14 +81,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (email: string, password: string, data: Omit<UserData, 'uid'>) => {
-    const userCredential = await registerUser(email, password, data.displayName, data.role, data.hostelRoom);
-    const user = userCredential.user;
-    
-    // Add user to Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      uid: user.uid,
-      ...data
-    });
+    try {
+      const userCredential = await registerUser(email, password, data.displayName, data.role, data.hostelRoom);
+      const user = userCredential.user;
+      
+      // Add user to Firestore with explicit fields instead of spreading the data object
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: data.email,
+        displayName: data.displayName,
+        role: data.role,
+        ...(data.hostelRoom ? { hostelRoom: data.hostelRoom } : {})
+      });
+      
+      return userCredential;
+    } catch (error) {
+      console.error('Registration error in AuthContext:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
