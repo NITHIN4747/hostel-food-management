@@ -58,6 +58,10 @@ This two-step process ensures efficient meal planning and minimizes unnecessary 
 
 
 
+DEMO VIDEO LINK
+
+https://youtu.be/jcnk8q4SQlQ?feature=shared
+
 ⚙️ Tech Stack
 
 Frontend: React, Tailwind CSS, Vite
