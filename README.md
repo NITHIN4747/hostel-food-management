@@ -45,6 +45,19 @@ Receive real-time updates about meals
 Submit feedback about food quality and service
 
 
+🍱 Double Attendance System
+The system implements a dual attendance mechanism to optimize food preparation and reduce waste:
+
+Willingness Marking:
+Students must indicate their intent to have a meal at least 4 hours in advance. This helps kitchen staff plan meals more accurately.
+
+Physical Attendance in Mess:
+On arriving at the mess, students are required to physically mark their attendance, ensuring that food is served only to those who actually show up.
+
+This two-step process ensures efficient meal planning and minimizes unnecessary food consumption.
+
+
+
 ⚙️ Tech Stack
 
 Frontend: React, Tailwind CSS, Vite
