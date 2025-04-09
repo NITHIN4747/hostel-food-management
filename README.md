@@ -8,9 +8,9 @@ The Hostel Food Management System streamlines daily hostel food operations. It p
 🧑‍💻 Team: TrioLogic
 👨‍💼 NITHIN. K – Team Lead & Backend Developer
 
-🧠 Raghul N.S – UI/UX & Integration
+🧠 Raghul N.S – Firebase & Functional Modules
 
-🧰 Thibish D – Firebase & Functional Modules
+🧰 Thibish D – UI/UX & Integration
 
 📦 Features
 
